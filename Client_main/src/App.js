@@ -80,6 +80,20 @@ const App = () => {
       window.location.reload()
     })
   }
+  const deleteColFxn = async () => {
+    await axios.post('http://localhost:9000/api/delCol', {
+      numRows, numCols
+    }).then((res) => {
+      window.location.reload()
+    })
+  }
+  const deleteRowFxn = async () => {
+    await axios.post('http://localhost:9000/api/delRow', {
+      numRows
+    }).then((res) => {
+      window.location.reload()
+    })
+  }
 
   const handleDelete = async () => {
     await axios.post('http://localhost:9000/api/delete', { selected }).then((res) => {
@@ -143,11 +157,13 @@ const App = () => {
               <th key={index} className="py-2 px-4 bg-pink-600 text-white">C{index + 1}</th>
             ))}
             <h1 onClick={addColFxn} className={btnClass}>Add Column</h1>
+            <h1 onClick={deleteColFxn} className={btnClass}>Delete Column</h1>
           </tr>
         </thead>
         <tbody>
           {data.map((row, index) => (<RowRender key={Math.random() * 100000} history={history} setSel={setSel} row={row.column} index={index} />))}
           <h1 onClick={addRowFxn} className={btnClass}>Add Row</h1>
+          <h1 onClick={deleteRowFxn} className={btnClass}>Delete Row</h1>
         </tbody>
       </table>
     </div>

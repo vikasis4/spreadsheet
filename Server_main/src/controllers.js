@@ -93,6 +93,25 @@ const addCol = async (req, res) => {
     res.json({ status: false })
   }
 }
+const delCol = async (req, res) => {
+  try {
+    var data = await prisma.row.findFirst({
+      where: {
+        num: req.body.numRows
+      }
+    })
+    await prisma.col.deleteMany({
+      where: {
+        num: req.body.numCols,
+        rowId: data.rowId
+      }
+    })
+    res.json({ status: true })
+  } catch (error) {
+    console.log(error);
+    res.json({ status: false })
+  }
+}
 const addRow = async (req, res) => {
   try {
     await prisma.row.create({
@@ -106,6 +125,20 @@ const addRow = async (req, res) => {
     res.json({ status: false })
   }
 }
+const delRow = async (req, res) => {
+  try {
+    await prisma.row.delete({
+      where: {
+        num: req.body.numRows
+      }
+    })
+    res.json({ status: true })
+  } catch (error) {
+    console.log(error);
+    res.json({ status: false })
+  }
+}
+
 
 const deleteCell = async (req, res) => {
   try {
@@ -152,4 +185,4 @@ const undoCell = async (req, res) => {
   }
 }
 
-module.exports = { getRows, addData, addCol, addRow, deleteCell, undoCell };
+module.exports = { getRows, addData, addCol, addRow, deleteCell, undoCell, delRow, delCol };

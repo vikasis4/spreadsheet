@@ -1,5 +1,5 @@
 const express = require('express');
-const { getRows, addData, addRow, addCol, deleteCell, undoCell } = require('./controllers');
+const { getRows, addData, addRow, addCol, deleteCell, undoCell, delCol, delRow } = require('./controllers');
 
 const router = express.Router();
 
@@ -9,6 +9,8 @@ router.post('/addrow', addRow);
 router.post('/addcol', addCol);
 router.post('/delete', deleteCell);
 router.post('/undo', undoCell);
+router.post('/delCol', delCol);
+router.post('/delRow', delRow);
 
 module.exports = router;
  
