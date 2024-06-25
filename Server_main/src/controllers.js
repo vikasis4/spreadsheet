@@ -95,15 +95,9 @@ const addCol = async (req, res) => {
 }
 const delCol = async (req, res) => {
   try {
-    var data = await prisma.row.findFirst({
-      where: {
-        num: req.body.numRows
-      }
-    })
     await prisma.col.deleteMany({
       where: {
         num: req.body.numCols,
-        rowId: data.rowId
       }
     })
     res.json({ status: true })
