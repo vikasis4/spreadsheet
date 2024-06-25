@@ -6,8 +6,8 @@ const App = () => {
   const [data, setData] = useState([]);
   const [numRows, setNumRows] = useState(0);
   const [numCols, setNumCols] = useState(0);
-  const [random, setRandom] = useState(0);
-  var selected = useRef({ row: 0, col: 0 }).current;
+  var selected = useRef({ row: 0, col: 0, data: "" }).current;
+  var copyData = useRef('').current;
   var history = useRef([]).current;
   var redo = useRef([]).current;
 
@@ -19,6 +19,7 @@ const App = () => {
   useEffect(() => {
     fetchData();
   }, []);
+
 
   const fetchData = async () => {
     const response = await axios.get('http://localhost:9000/api/data');
@@ -58,6 +59,13 @@ const App = () => {
     setData(newArr);
   };
 
+  ///////////////////////////// UPDATE FUNCTION ////////////////////////
+  const updateData = (obj) => {
+    var newArray = [...data]
+    newArray[obj.row - 1].column[obj.col - 1].data = obj.data;
+    setData(newArray)
+  }
+  ///////////////////////////// UPDATE FUNCTION ////////////////////////
   const addRowFxn = async () => {
     await axios.post('http://localhost:9000/api/addRow', {
       numRows
@@ -81,7 +89,9 @@ const App = () => {
   const handleUndo = async () => {
     if (history.length > 0) {
       redo.push(history[history.length - 1])
-      await axios.post('http://localhost:9000/api/undo', { data: history[history.length - 1] }).then((res) => {
+      await axios.post('http://localhost:9000/api/undo', { data: history[history.length - 2] }).then((res) => {
+        updateData(history[history.length - 2])
+        history.pop();
         history.pop();
       })
     }
@@ -89,9 +99,18 @@ const App = () => {
   const handleRedo = async () => {
     if (redo.length > 0) {
       await axios.post('http://localhost:9000/api/undo', { data: redo[redo.length - 1] }).then((res) => {
+        updateData(redo[redo.length - 1])
         redo.pop()
       })
     }
+  }
+  const handleCopy = () => {
+    copyData = selected.data
+  }
+  const handlePaste = () => {
+    selected.data = copyData
+    var newObj = { ...selected }
+    updateData(newObj)
   }
   console.log('redner');
   useEffect(() => {
@@ -101,9 +120,9 @@ const App = () => {
       } else if (e.ctrlKey && e.key === 'y') {
         handleRedo();
       } else if (e.ctrlKey && e.key === 'c') {
-        // handleCopy(selectedCell.id, selectedCell.column);
+        handleCopy();
       } else if (e.ctrlKey && e.key === 'v') {
-        // handlePaste(selectedCell.id, selectedCell.column);
+        handlePaste();
       } else if (e.key === 'Delete') {
         handleDelete();
       }
@@ -111,7 +130,7 @@ const App = () => {
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [handleDelete, handleUndo, handleRedo]);
+  }, [handleDelete, handleUndo, handleRedo, handleCopy, handlePaste]);
 
   var btnClass = 'hover:cursor-pointer m-4 px-2 py-1 bg-blue-500 text-center rounded-md shadow-md text-white'
   return (
@@ -137,7 +156,6 @@ const App = () => {
 
 function RowRender({ row, index, setSel, history }) {
   return (
-
     <tr>
       <td key={index} className="py-2 px-4 bg-pink-600 text-center text-white">R{index + 1}</td>
       {row.map((data) => <CellRender key={Math.random() * 100000} history={history} setSel={setSel} row={data} index={index} />)}
@@ -153,6 +171,7 @@ function CellRender({ row, index, setSel, history }) {
   const handlechange = async (e) => {
     setState(e.target.value)
     history.push({ col: row.num + 1, row: index + 1, data: state });
+    history.push({ col: row.num + 1, row: index + 1, data: e.target.value });
     await axios.post('http://localhost:9000/api/data', { row: index, col: row.num, data: e.target.value });
   }
 
@@ -162,7 +181,7 @@ function CellRender({ row, index, setSel, history }) {
         type="text"
         value={state}
         onChange={handlechange}
-        onClick={() => { setSel({ col: row.num + 1, row: index + 1 }) }}
+        onClick={() => { setSel({ col: row.num + 1, row: index + 1, data: state }) }}
       />
     </td>
   )
