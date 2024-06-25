@@ -9,7 +9,7 @@ datasource db {
 
 model row {
   rowId  String @id @default(uuid())
-  num    Int
+  num    Int @unique
   column col[]
 }
 

@@ -107,4 +107,49 @@ const addRow = async (req, res) => {
   }
 }
 
-module.exports = { getRows, addData, addCol, addRow };
+const deleteCell = async (req, res) => {
+  try {
+    var row = await prisma.row.findFirst({
+      where: {
+        num: req.body.selected.row
+      }
+    })
+    await prisma.col.updateMany({
+      where: {
+        num: req.body.selected.col,
+        rowId: row.rowId
+      },
+      data: {
+        data: ''
+      }
+    })
+    res.json({ status: true })
+  } catch (error) {
+    console.log(error);
+    res.json({ status: false })
+  }
+}
+const undoCell = async (req, res) => {
+  try {
+    var row = await prisma.row.findFirst({
+      where: {
+        num: req.body.data.row
+      }
+    })
+    await prisma.col.updateMany({
+      where: {
+        num: req.body.data.col,
+        rowId: row.rowId
+      },
+      data: {
+        data: req.body.data.data
+      }
+    })
+    res.json({ status: true })
+  } catch (error) {
+    console.log(error);
+    res.json({ status: false })
+  }
+}
+
+module.exports = { getRows, addData, addCol, addRow, deleteCell, undoCell };

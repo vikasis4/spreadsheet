@@ -6,11 +6,14 @@ const App = () => {
   const [data, setData] = useState([]);
   const [numRows, setNumRows] = useState(0);
   const [numCols, setNumCols] = useState(0);
+  const [random, setRandom] = useState(0);
   var selected = useRef({ row: 0, col: 0 }).current;
+  var history = useRef([]).current;
+  var redo = useRef([]).current;
+
 
   const setSel = (val) => {
     selected = val;
-    console.log(selected);
   }
 
   useEffect(() => {
@@ -59,7 +62,6 @@ const App = () => {
     await axios.post('http://localhost:9000/api/addRow', {
       numRows
     }).then((res) => {
-      console.log(res);
       window.location.reload()
     })
   }
@@ -67,20 +69,37 @@ const App = () => {
     await axios.post('http://localhost:9000/api/addCol', {
       numRows, numCols
     }).then((res) => {
-      console.log(res);
       window.location.reload()
     })
   }
 
-  const handleDelete = () => {
-    console.log(selected);
+  const handleDelete = async () => {
+    await axios.post('http://localhost:9000/api/delete', { selected }).then((res) => {
+      window.location.reload()
+    })
   }
+  const handleUndo = async () => {
+    if (history.length > 0) {
+      redo.push(history[history.length - 1])
+      await axios.post('http://localhost:9000/api/undo', { data: history[history.length - 1] }).then((res) => {
+        history.pop();
+      })
+    }
+  }
+  const handleRedo = async () => {
+    if (redo.length > 0) {
+      await axios.post('http://localhost:9000/api/undo', { data: redo[redo.length - 1] }).then((res) => {
+        redo.pop()
+      })
+    }
+  }
+  console.log('redner');
   useEffect(() => {
     const handleKeyDown = (e) => {
       if (e.ctrlKey && e.key === 'z') {
-        // handleUndo();
+        handleUndo();
       } else if (e.ctrlKey && e.key === 'y') {
-        // handleRedo();
+        handleRedo();
       } else if (e.ctrlKey && e.key === 'c') {
         // handleCopy(selectedCell.id, selectedCell.column);
       } else if (e.ctrlKey && e.key === 'v') {
@@ -92,7 +111,7 @@ const App = () => {
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [selected]);
+  }, [handleDelete, handleUndo, handleRedo]);
 
   var btnClass = 'hover:cursor-pointer m-4 px-2 py-1 bg-blue-500 text-center rounded-md shadow-md text-white'
   return (
@@ -108,7 +127,7 @@ const App = () => {
           </tr>
         </thead>
         <tbody>
-          {data.map((row, index) => (<RowRender key={Math.random() * 100000} setSel={setSel} row={row.column} index={index} />))}
+          {data.map((row, index) => (<RowRender key={Math.random() * 100000} history={history} setSel={setSel} row={row.column} index={index} />))}
           <h1 onClick={addRowFxn} className={btnClass}>Add Row</h1>
         </tbody>
       </table>
@@ -116,23 +135,24 @@ const App = () => {
   );
 };
 
-function RowRender({ row, index, setSel }) {
+function RowRender({ row, index, setSel, history }) {
   return (
 
     <tr>
       <td key={index} className="py-2 px-4 bg-pink-600 text-center text-white">R{index + 1}</td>
-      {row.map((data) => <CellRender key={Math.random() * 100000} setSel={setSel} row={data} index={index} />)}
+      {row.map((data) => <CellRender key={Math.random() * 100000} history={history} setSel={setSel} row={data} index={index} />)}
     </tr>
 
   )
 }
 
-function CellRender({ row, index, setSel }) {
+function CellRender({ row, index, setSel, history }) {
 
   const [state, setState] = React.useState(row.data);
 
   const handlechange = async (e) => {
     setState(e.target.value)
+    history.push({ col: row.num + 1, row: index + 1, data: state });
     await axios.post('http://localhost:9000/api/data', { row: index, col: row.num, data: e.target.value });
   }
 
